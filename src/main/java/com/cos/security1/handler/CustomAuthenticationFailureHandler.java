@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * 인증이 실패하면 이렇게 동작해주세요 ㅠㅠ
  * AuthenticationFailureHandler 구현!
- * 여기서는 응답 헤더를 추가했다
+ * 여기서는 응답 헤더를 추가했다 ㅇ
  */
 public class CustomAuthenticationFailureHandler implements AuthenticationFailureHandler {
     @Override
