@@ -1,6 +1,8 @@
 package com.cos.security1.controller;
 
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.concurrent.DelegatingSecurityContextCallable;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -8,6 +10,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RestController
 public class HelloController {
@@ -59,4 +64,73 @@ public class HelloController {
         String username = context.getAuthentication().getName(); // NullPointerException
     }
 
+    /**
+     * 사용자 이름 호출을 위해 쓰레드를 만들었지만
+     * 스프링이 생성한 게 아닌 내가 직접 만든 쓰레드여서
+     * 인증이 없고 보안 컨텍스트도 비어있음 ㅠㅠ
+     */
+    //보안 컨텍스트에서 사용자 이름을 반환함
+    @GetMapping("/ciao1")
+    public String ciao1() {
+        Callable<String> task = () -> {
+            SecurityContext context = SecurityContextHolder.getContext();
+            return context.getAuthentication().getName();
+        };
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        try {
+            return "Ciao, " + executorService.submit(task).get();
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            executorService.shutdown();
+        }
+    }
+
+    //보안 컨텍스트에서 사용자 이름을 반환함
+    @GetMapping("/ciao2")
+    public String ciao2() {
+        Callable<String> task = () -> {
+            SecurityContext context = SecurityContextHolder.getContext();
+            return context.getAuthentication().getName();
+        };
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        try {
+            /**
+             * DelegatingSecurityContextCallable
+             * 얘를 추가해주면,
+             * 현재 보안컨텍스트를
+             * 새 쓰레드에 복사하고
+             * 내가 하고 싶은 작업도 실행해준다!
+             */
+            var callable = new DelegatingSecurityContextCallable<>(task);
+            return "Ciao, " + executorService.submit(task).get();
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            executorService.shutdown();
+        }
+    }
+
+    @GetMapping("/hola")
+    public String hola() {
+        Callable<String> task = () -> {
+            SecurityContext context = SecurityContextHolder.getContext();
+            return context.getAuthentication().getName();
+        };
+        ExecutorService e = Executors.newCachedThreadPool();
+        e = new DelegatingSecurityContextExecutorService(e);
+        try {
+            return "hola, "+e.submit(task).get();
+        } catch (ExecutionException ex) {
+            throw new RuntimeException(ex);
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            e.shutdown();
+        }
+    }
 }
