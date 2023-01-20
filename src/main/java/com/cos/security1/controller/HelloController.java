@@ -10,6 +10,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class HelloController {
 
     /**
+     * MODE_THREADLOCAL 전략(기본)
+     * 각 스레드는 컬렉션에 저장한 데이터만 볼 수 있고
+     * 다른 스레드에게는 접근이 불가함
+     * - 그냥 다 자기꺼 가지고 있고
+     * - 내꺼는 나만 볼 수 있다는 뜻
+     * - 다른 스레드가 만들어져도 걔가 내 세부 정보를 복사하지 않음
+     * - 자기 껄 따로 가지고 있음
+     * /
+     /*
      * 인증이 완료된 사용자 정보를
      * 시큐리티 컨텍스트에 있는
      * 어센티케이션에서 가져올 수 있어요
